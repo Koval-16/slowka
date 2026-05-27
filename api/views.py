@@ -1,7 +1,7 @@
 import csv
 import json
 import random
-from django.db.models import Q
+from django.db.models import F,Q
 from django.shortcuts import render
 from .models import WordSet, Word, Quiz, Question, UserWordProgress
 from django.contrib.auth.models import User
@@ -10,6 +10,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
+
 
 
 def app_home(request):
@@ -530,6 +531,37 @@ def get_set_stats(request, set_id):
             "mastery_level": mastery_level
         })
 
+    except WordSet.DoesNotExist:
+        return Response({"status": "error", "message": "Zestaw nie istnieje"}, status=404)
+    except Exception as e:
+        return Response({"status": "error", "message": str(e)}, status=500)
+
+
+# zwraca słówka "trudne"
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_review_flashcards(request, set_id):
+    try:
+        word_set = WordSet.objects.get(id=set_id)
+        if not word_set.public and word_set.owner != request.user:
+            return Response({"status": "error", "message": "Brak dostępu do zestawu"}, status=403)
+        progresses = UserWordProgress.objects.filter(
+            user=request.user,
+            word__word_set=word_set
+        ).filter(
+            Q(is_hard=True) | Q(incorrect_answers__gt=F('correct_answers'))
+        ).select_related('word')
+        review_words = [p.word for p in progresses]
+        if not review_words:
+            return Response({
+                "status": "ok", 
+                "message": "Nie masz żadnych słówek do powtórki w tym zestawie!",
+                "words": []
+            })
+        return Response({
+            "status": "ok",
+            "words": [serialize_word(w) for w in review_words]
+        })
     except WordSet.DoesNotExist:
         return Response({"status": "error", "message": "Zestaw nie istnieje"}, status=404)
     except Exception as e:

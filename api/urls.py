@@ -15,6 +15,7 @@ urlpatterns = [
     path("words/<int:word_id>/check/", views.check_word_answer), # sprawdzanie odpowiedzi wpisywanej
     path("words/<int:word_id>/toggle-hard/", views.toggle_hard_word), # oznaczenie slowka jako trudne
     path("sets/<int:set_id>/quiz/", views.create_quiz),      # tworzenie quizu
+    path("sets/<int:set_id>/review/", views.get_review_flashcards), # słówka trudne
     path("sets/<int:set_id>/stats/", views.get_set_stats),  # statystki quizu
     path("quizzes/<int:quiz_id>/", views.get_quiz),         # pobranie quizu
     path("quizzes/<int:quiz_id>/submit/", views.submit_quiz), # wynik quizu

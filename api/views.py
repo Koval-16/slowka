@@ -3,7 +3,7 @@ import json
 import random
 from django.db.models import Q
 from django.shortcuts import render
-from .models import WordSet, Word, Quiz, Question
+from .models import WordSet, Word, Quiz, Question, UserWordProgress
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from rest_framework.decorators import api_view, permission_classes
@@ -226,6 +226,33 @@ def delete_word(request, word_id):
         return Response({"status": "error", "message": "Słówko nie istnieje"}, status=404)
 
 
+# Edycja istniejącego słówka w zestawie
+@api_view(["POST", "PUT"])
+@permission_classes([IsAuthenticated])
+def edit_word(request, word_id):
+    try:
+        word = Word.objects.get(id=word_id)
+        if word.word_set.owner != request.user:
+            return Response({"status": "error", "message": "Brak uprawnień do edycji tego słówka"}, status=403)
+        new_pl = (request.data.get("pl") or word.pl).strip()
+        new_en = (request.data.get("en") or word.en).strip()
+
+        if not new_pl or not new_en:
+            return Response({"status": "error", "message": "Pola tłumaczeń nie mogą być puste"}, status=400)
+        word.pl = new_pl
+        word.en = new_en
+        word.save()
+        return Response({
+            "status": "ok", 
+            "message": "Słówko zostało zaktualizowane",
+            "word": serialize_word(word)
+        })
+    except Word.DoesNotExist:
+        return Response({"status": "error", "message": "Słówko nie istnieje"}, status=404)
+    except Exception as e:
+        return Response({"status": "error", "message": str(e)}, status=500)
+
+
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def import_words(request, set_id):
@@ -295,14 +322,20 @@ def check_word_answer(request, word_id):
         user_answer = (request.data.get("answer") or "").strip().lower()
         if not user_answer:
             return Response({"status": "error", "message": "Brak odpowiedzi"}, status=400)
-
         word = Word.objects.select_related("word_set__owner").get(id=word_id)
         if not word.word_set.public and word.word_set.owner != request.user:
             return Response({"status": "error", "message": "Brak dostępu do słówka"}, status=403)
-
         correct_answer = word.en.strip().lower()
         is_correct = user_answer == correct_answer
-
+        progress, created = UserWordProgress.objects.get_or_create(
+            user=request.user,
+            word=word
+        )
+        if is_correct:
+            progress.correct_answers += 1
+        else:
+            progress.incorrect_answers += 1
+        progress.save()
         return Response({
             "status": "ok",
             "correct": is_correct,
@@ -340,6 +373,17 @@ def submit_quiz(request, quiz_id):
             is_correct = user_option == question.correct_option
             if is_correct:
                 correct_count += 1
+
+            progress, created = UserWordProgress.objects.get_or_create(
+                user=request.user,
+                word=question.word
+            )
+            
+            if is_correct:
+                progress.correct_answers += 1
+            else:
+                progress.incorrect_answers += 1
+            progress.save()
 
             results.append({
                 "question_id": question.id,
@@ -407,3 +451,86 @@ def login_user(request):
         }, status=200)
     else:
         return Response({'error': 'Błędny login lub hasło'}, status=400)
+
+# Oznaczanie slowka jako trudne
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def toggle_hard_word(request, word_id):
+    try:
+        word = Word.objects.get(id=word_id)
+        if not word.word_set.public and word.word_set.owner != request.user:
+            return Response({"status": "error", "message": "Brak dostępu do tego słówka"}, status=403)
+        progress, created = UserWordProgress.objects.get_or_create(
+            user=request.user,
+            word=word
+        )
+        progress.is_hard = not progress.is_hard
+        progress.save()
+        return Response({
+            "status": "ok",
+            "is_hard": progress.is_hard,
+            "message": "Status trudnego słówka został zaktualizowany."
+        })
+    except Word.DoesNotExist:
+        return Response({"status": "error", "message": "Słówko nie istnieje"}, status=404)
+    except Exception as e:
+        return Response({"status": "error", "message": str(e)}, status=500)
+
+# statystyki dla zestawu slowek
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_set_stats(request, set_id):
+    try:
+        word_set = WordSet.objects.get(id=set_id)
+        if not word_set.public and word_set.owner != request.user:
+            return Response({"status": "error", "message": "Brak dostępu do zestawu"}, status=403)
+
+        progress_records = UserWordProgress.objects.filter(
+            user=request.user,
+            word__word_set=word_set
+        )
+
+        total_correct = sum(p.correct_answers for p in progress_records)
+        total_incorrect = sum(p.incorrect_answers for p in progress_records)
+        total_attempts = total_correct + total_incorrect
+
+        success_rate = 0
+        if total_attempts > 0:
+            success_rate = round((total_correct / total_attempts) * 100, 2)
+
+        mastered_words = 0
+        for p in progress_records:
+            attempts = p.correct_answers + p.incorrect_answers
+            if attempts > 0:
+                word_success_rate = p.correct_answers / attempts
+                # slowko opanowane gdy poprawnie odpowiedziano >= 3 razy ze skutecznoscia 75%
+                if p.correct_answers >= 3 and word_success_rate >= 0.75:
+                    mastered_words += 1
+
+        total_words = word_set.words.count()
+        mastery_percentage = 0
+        if total_words > 0:
+            mastery_percentage = round((mastered_words / total_words) * 100, 2)
+            
+        mastery_level = "Początkujący"
+        if mastery_percentage >= 80:
+            mastery_level = "Ekspert (Zestaw opanowany)"
+        elif mastery_percentage >= 40:
+            mastery_level = "Średniozaawansowany"
+
+        return Response({
+            "status": "ok",
+            "total_correct": total_correct,
+            "total_incorrect": total_incorrect,
+            "total_attempts": total_attempts,
+            "success_rate": success_rate,
+            "mastered_words": mastered_words,
+            "total_words": total_words,
+            "mastery_percentage": mastery_percentage,
+            "mastery_level": mastery_level
+        })
+
+    except WordSet.DoesNotExist:
+        return Response({"status": "error", "message": "Zestaw nie istnieje"}, status=404)
+    except Exception as e:
+        return Response({"status": "error", "message": str(e)}, status=500)

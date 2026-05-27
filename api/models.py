@@ -38,3 +38,14 @@ class Question(models.Model):
 
     def __str__(self):
         return f"Question: {self.word.pl}"
+
+class UserWordProgress(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="word_progress")
+    word = models.ForeignKey(Word, on_delete=models.CASCADE, related_name="progress")
+    correct_answers = models.IntegerField(default=0)
+    incorrect_answers = models.IntegerField(default=0)
+    is_hard = models.BooleanField(default=False)
+    class Meta:
+        unique_together = ('user', 'word')
+    def __str__(self):
+        return f"Progress {self.user.username} for word: {self.word.pl}"

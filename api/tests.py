@@ -188,3 +188,24 @@ class AuthAndSetFlowTests(TestCase):
         self.assertEqual(submitted.status_code, 200)
         self.assertEqual(submitted.data["correct_count"], 4)
         self.assertEqual(submitted.data["score_percentage"], 100.0)
+
+    def test_edit_word_in_set(self):
+        user = User.objects.create_user(username="tomek", password="tajne123")
+        token = Token.objects.create(user=user)
+        word_set = WordSet.objects.create(name="Zestaw testowy", public=True, owner=user)
+
+        word = Word.objects.create(word_set=word_set, pl="komputer", en="camputer")
+        
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {token.key}")
+
+        response = self.client.post(
+            f"/api/words/{word.id}/edit/",
+            {"pl": "komputer", "en": "computer"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        
+        word.refresh_from_db()
+        self.assertEqual(word.en, "computer")
+        self.assertEqual(response.data["message"], "Słówko zostało zaktualizowane")

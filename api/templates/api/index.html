@@ -1,0 +1,437 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>VocabApp | Nauka słówek, fiszki i quizy</title>
+    <link rel="stylesheet" href="{% static 'api/app.css' %}">
+    <script defer src="{% static 'api/app.js' %}"></script>
+</head>
+<body>
+    <div class="page-shell">
+        <header class="hero">
+            <div class="hero-copy panel">
+                <p class="eyebrow">Aplikacja Do Nauki Języków</p>
+                <h1>Ucz się języków szybciej, wygodniej i we własnym tempie.</h1>
+                <p class="hero-text">
+                    W jednym miejscu połączysz rejestrację, własne zestawy słówek, fiszki i quizy.
+                    Front korzysta z istniejącego backendu i prowadzi przez cały rytm nauki:
+                    od pierwszego zestawu do sprawdzenia postępów.
+                </p>
+                <div class="hero-actions">
+                    <button type="button" class="primary-button" data-scroll-target="workspace-section">Przejdź do nauki</button>
+                    <button type="button" class="ghost-button" data-scroll-target="how-it-works">Jak to działa</button>
+                </div>
+                <div class="hero-highlights">
+                    <div class="highlight">
+                        <span class="highlight-label">Funkcja 01</span>
+                        <strong>Własne zestawy słówek</strong>
+                        <p>Twórz publiczne i prywatne kolekcje pod swoje tempo nauki.</p>
+                    </div>
+                    <div class="highlight">
+                        <span class="highlight-label">Funkcja 02</span>
+                        <strong>Fiszki do codziennych powtórek</strong>
+                        <p>Przełączaj karty i utrwalaj tłumaczenia w lekkim, szybkim formacie.</p>
+                    </div>
+                    <div class="highlight">
+                        <span class="highlight-label">Funkcja 03</span>
+                        <strong>Quizy sprawdzające postępy</strong>
+                        <p>Zamieniaj zestaw w test i od razu sprawdzaj, co już pamiętasz.</p>
+                    </div>
+                </div>
+            </div>
+
+            <aside class="account-card panel">
+                <div class="panel-heading">
+                    <div>
+                        <p class="panel-kicker">Konto</p>
+                        <h2>Wejdź do aplikacji</h2>
+                    </div>
+                    <span id="hero-auth-status" class="status-pill neutral">Gość</span>
+                </div>
+
+                <div id="guest-auth">
+                    <div class="tab-row" role="tablist" aria-label="Formularze logowania">
+                        <button class="tab-button is-active" type="button" data-tab-target="register-form">Rejestracja</button>
+                        <button class="tab-button" type="button" data-tab-target="login-form">Logowanie</button>
+                    </div>
+
+                    <form id="register-form" class="auth-form">
+                        <label>
+                            Login
+                            <input type="text" name="username" autocomplete="username" placeholder="np. ola123" required>
+                        </label>
+                        <label>
+                            Hasło
+                            <input type="password" name="password" autocomplete="new-password" placeholder="Minimum kilka znaków" required>
+                        </label>
+                        <button type="submit" class="primary-button">Załóż konto</button>
+                    </form>
+
+                    <form id="login-form" class="auth-form is-hidden">
+                        <label>
+                            Login
+                            <input type="text" name="username" autocomplete="username" placeholder="Twój login" required>
+                        </label>
+                        <label>
+                            Hasło
+                            <input type="password" name="password" autocomplete="current-password" placeholder="Twoje hasło" required>
+                        </label>
+                        <button type="submit" class="secondary-button">Zaloguj się</button>
+                    </form>
+
+                    <div id="auth-feedback" class="feedback" aria-live="polite"></div>
+                </div>
+
+                <div id="account-summary" class="is-hidden">
+                    <div class="summary-grid">
+                        <div class="summary-item">
+                            <span class="summary-label">Zalogowano</span>
+                            <strong id="current-user">-</strong>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Twoje zestawy</span>
+                            <strong id="set-count">0</strong>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Aktywny zestaw</span>
+                            <strong id="active-set-name">Brak</strong>
+                        </div>
+                    </div>
+
+                    <div class="next-step-card">
+                        <p class="summary-label">Następny krok</p>
+                        <strong id="next-step-title">Wybierz zestaw</strong>
+                        <p id="next-step-copy" class="summary-copy">
+                            Po lewej stronie znajdziesz listę zestawów i formularz tworzenia nowych materiałów.
+                        </p>
+                    </div>
+
+                    <button id="logout-button" type="button" class="ghost-button full-width">Wyloguj</button>
+                </div>
+            </aside>
+        </header>
+
+        <section id="how-it-works" class="section-card">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Jak To Działa</p>
+                    <h2>Od pierwszego słówka do pewnego wyniku</h2>
+                </div>
+                <p class="section-copy">
+                    Przechodzisz przez cały proces nauki: od wyboru zestawu, przez powtórkę, aż po sprawdzenie tego,
+                    co już pamiętasz.
+                </p>
+            </div>
+            <div class="steps-grid">
+                <article class="step-card">
+                    <span class="step-number">01</span>
+                    <h3>Wybierz zestaw</h3>
+                    <p>Otwórz kolekcję słówek, którą chcesz rozwijać lub powtarzać.</p>
+                </article>
+                <article class="step-card">
+                    <span class="step-number">02</span>
+                    <h3>Ucz się z fiszek</h3>
+                    <p>Przełączaj karty, zapamiętuj tłumaczenia i oswajaj się ze słownictwem.</p>
+                </article>
+                <article class="step-card">
+                    <span class="step-number">03</span>
+                    <h3>Dodawaj słowa</h3>
+                    <p>Rozszerzaj zestawy o kolejne wyrazy, żeby materiał rósł razem z Twoją nauką.</p>
+                </article>
+                <article class="step-card">
+                    <span class="step-number">04</span>
+                    <h3>Sprawdź postępy</h3>
+                    <p>Uruchom quiz i zobacz, jak dobrze radzisz sobie z wybranym materiałem.</p>
+                </article>
+            </div>
+        </section>
+
+        <section id="workspace-section" class="workspace-grid">
+            <aside class="panel sidebar-panel">
+                <div class="panel-heading">
+                    <div>
+                        <p class="panel-kicker">Nowy Zestaw</p>
+                        <h2>Stwórz materiał do nauki</h2>
+                    </div>
+                </div>
+
+                <div id="create-set-gate" class="auth-gate">
+                    Zaloguj się albo zarejestruj, żeby utworzyć nowy zestaw i dodać do niego pierwsze pary słówek.
+                </div>
+
+                <form id="set-form" class="set-form is-hidden">
+                    <label>
+                        Nazwa zestawu
+                        <input type="text" name="name" placeholder="np. Angielski podróże" required>
+                    </label>
+
+                    <label class="toggle">
+                        <input type="checkbox" name="public" checked>
+                        <span>Udostępnij ten zestaw innym użytkownikom</span>
+                    </label>
+
+                    <div class="builder-heading">
+                        <div>
+                            <p class="panel-kicker">Słówka Startowe</p>
+                            <h3>Pary PL -> EN</h3>
+                        </div>
+                        <button id="add-word-row" type="button" class="ghost-button">Dodaj parę</button>
+                    </div>
+                    <div id="word-rows" class="word-rows"></div>
+
+                    <button type="submit" class="primary-button">Utwórz zestaw</button>
+                </form>
+
+                <div id="set-feedback" class="feedback" aria-live="polite"></div>
+
+                <div class="sidebar-divider"></div>
+
+                <div class="panel-heading compact-heading">
+                    <div>
+                        <p class="panel-kicker">Zestawy</p>
+                        <h2>Lista dostępnych zestawów</h2>
+                    </div>
+                    <button id="refresh-sets" type="button" class="ghost-button">Odśwież</button>
+                </div>
+
+                <div id="sets-list" class="sets-list empty-state">
+                    Zaloguj się, żeby pobrać zestawy z API.
+                </div>
+
+                <div class="quick-note">
+                    <p class="panel-kicker">Szybki Start</p>
+                    <h3>Jak najlepiej korzystać z aplikacji</h3>
+                    <ul class="tips-list">
+                        <li>Wybierz zestaw dopasowany do tego, czego chcesz się nauczyć.</li>
+                        <li>Przejdź do fiszek, żeby szybko utrwalić tłumaczenia.</li>
+                        <li>Dodawaj nowe słowa do swoich zestawów.</li>
+                        <li>Uruchom quiz i sprawdź, ile już pamiętasz.</li>
+                    </ul>
+                </div>
+            </aside>
+
+            <div class="workspace-main">
+                <section class="panel dashboard-panel">
+                    <div id="study-empty" class="empty-state large-empty">
+                        Wybierz zestaw z listy po lewej stronie, aby zobaczyć podgląd słówek, fiszki i quiz.
+                    </div>
+
+                    <div id="study-content" class="is-hidden">
+                        <div class="dashboard-header">
+                            <div>
+                                <p class="panel-kicker">Twoja Nauka</p>
+                                <h2 id="selected-set-title">-</h2>
+                            </div>
+                            <span id="selected-set-badge" class="status-pill neutral">Brak zestawu</span>
+                        </div>
+
+                        <div class="stats-grid">
+                            <article class="metric-card">
+                                <p class="panel-kicker">Słówka</p>
+                                <strong id="stat-word-count">0</strong>
+                                <p>Liczba słów i tłumaczeń w aktywnym zestawie.</p>
+                            </article>
+                            <article class="metric-card">
+                                <p class="panel-kicker">Fiszki</p>
+                                <strong id="stat-flashcard-count">0</strong>
+                                <p>Karty gotowe do szybkiej powtórki i utrwalenia materiału.</p>
+                            </article>
+                            <article class="metric-card">
+                                <p class="panel-kicker">Quiz</p>
+                                <strong id="stat-quiz-ready">W przygotowaniu</strong>
+                                <p id="quiz-ready-copy">Dodaj co najmniej 4 słówka, żeby wygenerować quiz.</p>
+                            </article>
+                        </div>
+
+                        <section class="subpanel">
+                            <div class="panel-heading compact-heading">
+                                <div>
+                                    <p class="panel-kicker">Słowa I Tłumaczenia</p>
+                                    <h3>Podgląd materiału</h3>
+                                </div>
+                                <p class="section-copy">Możesz usuwać wpisy tylko z własnych zestawów.</p>
+                            </div>
+                            <div class="table-wrap">
+                                <table class="words-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Polski</th>
+                                            <th>Angielski</th>
+                                            <th>Akcja</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="words-table-body"></tbody>
+                                </table>
+                            </div>
+                        </section>
+                    </div>
+                </section>
+
+                <div class="tools-grid">
+                    <section class="panel tool-panel">
+                        <div class="panel-heading compact-heading">
+                            <div>
+                                <p class="panel-kicker">Dodaj Nowe Słowo</p>
+                                <h2>Rozszerz aktywny zestaw</h2>
+                            </div>
+                        </div>
+
+                        <div id="add-word-gate" class="empty-state">
+                            Wybierz własny zestaw, aby dodać do niego kolejne słówka.
+                        </div>
+
+                        <form id="add-word-form" class="stack-form is-hidden">
+                            <p id="add-word-context" class="section-copy"></p>
+                            <label>
+                                Polski
+                                <input type="text" name="pl" placeholder="np. pies">
+                            </label>
+                            <label>
+                                Angielski
+                                <input type="text" name="en" placeholder="np. dog">
+                            </label>
+                            <button type="submit" class="primary-button">Dodaj słówko</button>
+                        </form>
+
+                        <div id="add-word-feedback" class="feedback" aria-live="polite"></div>
+
+                        <div class="tool-divider"></div>
+
+                        <div class="panel-heading compact-heading">
+                            <div>
+                                <p class="panel-kicker">Import Pliku</p>
+                                <h2>Załaduj słówka z CSV lub JSON</h2>
+                            </div>
+                        </div>
+
+                        <div id="import-gate" class="empty-state">
+                            Wybierz własny zestaw, aby zaimportować do niego większą paczkę słówek z pliku.
+                        </div>
+
+                        <form id="import-form" class="stack-form is-hidden" enctype="multipart/form-data">
+                            <p id="import-context" class="section-copy"></p>
+                            <label>
+                                Plik
+                                <input type="file" name="file" accept=".csv,.json">
+                            </label>
+                            <button type="submit" class="secondary-button">Importuj słówka</button>
+                        </form>
+
+                        <div id="import-feedback" class="feedback" aria-live="polite"></div>
+                    </section>
+
+                    <section class="panel tool-panel">
+                        <div class="panel-heading compact-heading">
+                            <div>
+                                <p class="panel-kicker">Fiszki</p>
+                                <h2>Powtarzaj materiał karta po karcie</h2>
+                            </div>
+                        </div>
+
+                        <div id="flashcards-empty" class="empty-state">
+                            Wybierz zestaw z przynajmniej jednym słówkiem, aby uruchomić fiszki.
+                        </div>
+
+                        <div id="flashcards-content" class="is-hidden">
+                            <button id="flashcard-card" type="button" class="flashcard-surface">
+                                <span id="flashcard-side-label" class="panel-kicker">Polski</span>
+                                <strong id="flashcard-value">-</strong>
+                                <p id="flashcard-subtitle">Kliknij kartę lub użyj przycisku, żeby zobaczyć tłumaczenie.</p>
+                            </button>
+
+                            <div class="flashcard-actions">
+                                <button id="prev-flashcard" type="button" class="ghost-button">Poprzednia</button>
+                                <button id="flip-flashcard" type="button" class="secondary-button">Obróć kartę</button>
+                                <button id="next-flashcard" type="button" class="ghost-button">Następna</button>
+                            </div>
+
+                            <p id="flashcard-progress" class="section-copy">Karta 1 z 1</p>
+                        </div>
+
+                        <div class="tool-divider"></div>
+
+                        <div class="panel-heading compact-heading">
+                            <div>
+                                <p class="panel-kicker">Tryb Wpisywania</p>
+                                <h2>Sprawdź odpowiedź z klawiatury</h2>
+                            </div>
+                        </div>
+
+                        <div id="typing-empty" class="empty-state">
+                            Wybierz zestaw z przynajmniej jednym słówkiem, aby ćwiczyć wpisywanie tłumaczeń.
+                        </div>
+
+                        <form id="typing-form" class="stack-form is-hidden">
+                            <p id="typing-context" class="typing-prompt">-</p>
+                            <label>
+                                Twoja odpowiedź po angielsku
+                                <input type="text" name="answer" placeholder="np. dog" autocomplete="off">
+                            </label>
+                            <div class="inline-actions">
+                                <button type="submit" class="secondary-button">Sprawdź odpowiedź</button>
+                                <button id="next-typing-word" type="button" class="ghost-button">Następne słówko</button>
+                            </div>
+                        </form>
+
+                        <div id="typing-feedback" class="feedback" aria-live="polite"></div>
+                    </section>
+                </div>
+
+                <section class="panel quiz-panel">
+                    <div class="panel-heading compact-heading">
+                        <div>
+                            <p class="panel-kicker">Quiz</p>
+                            <h2>Sprawdź, czy już pamiętasz materiał</h2>
+                        </div>
+                        <p class="section-copy">Zestaw musi mieć minimum 4 słówka, żeby wygenerować pytania.</p>
+                    </div>
+
+                    <div id="quiz-gate" class="empty-state">
+                        Wybierz zestaw i dodaj do niego co najmniej 4 słówka, aby utworzyć quiz.
+                    </div>
+
+                    <div id="quiz-builder" class="is-hidden">
+                        <form id="quiz-form" class="quiz-form">
+                            <label>
+                                Nazwa quizu
+                                <input type="text" name="name" placeholder="np. Powtórka z podróży">
+                            </label>
+                            <button type="submit" class="primary-button">Generuj quiz</button>
+                        </form>
+
+                        <div id="quiz-feedback" class="feedback" aria-live="polite"></div>
+                        <div id="quiz-render" class="quiz-render"></div>
+                    </div>
+                </section>
+            </div>
+        </section>
+
+        <footer class="footer-card">
+            <p class="eyebrow">Aplikacja Do Nauki Języków</p>
+            <div class="footer-grid">
+                <h2>Aplikacja porządkuje słownictwo, wraca do ważnych słów i regularnie sprawdza postępy w nauce.</h2>
+                <p>
+                    Z jednej strony masz tworzenie i rozbudowę zestawów, z drugiej szybkie przejście przez fiszki
+                    oraz quiz z tego samego materiału. Dzięki temu backend i frontend składają się w jeden spójny proces.
+                </p>
+            </div>
+        </footer>
+    </div>
+
+    <template id="word-row-template">
+        <div class="word-row">
+            <label>
+                Polski
+                <input type="text" name="pl" placeholder="np. lotnisko">
+            </label>
+            <label>
+                English
+                <input type="text" name="en" placeholder="np. airport">
+            </label>
+            <button type="button" class="remove-row-button" aria-label="Usuń wiersz">Usuń</button>
+        </div>
+    </template>
+</body>
+</html>
